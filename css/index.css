@@ -1,0 +1,31 @@
+html, body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  margin: 0;
+  background-color: #000;
+}
+canvas {
+  max-width: 100%;
+}
+.panel {
+  position: absolute;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column
+}
+button {
+  background-color: transparent;
+  border-radius: 20px;
+  color: white;
+  padding: 5px 10px;
+  cursor: pointer;
+  outline: none;
+}
+button:hover {
+  background-color: #fff;
+  color: black;
+}

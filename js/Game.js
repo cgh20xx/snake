@@ -8,6 +8,8 @@ export default class Game {
     this.gameWidth = 40; // 格子數
     this.snake = new Snake();
     this.foods = [];
+    this.start = false;
+    this.events = {};
   }
 
   init() {
@@ -20,24 +22,62 @@ export default class Game {
     this.generateFood();
   }
 
+  on(eventName, fn) {
+    if (!this.events[eventName]) {
+      this.events[eventName] = [];
+    }
+    this.events[eventName].push(fn)
+  }
+
+  trigger(eventName, ...args) {
+    this.events[eventName].forEach(fn => {
+      fn.apply(this, args);
+    })
+  }
+
+  startGame() {
+    this.start = true;
+    this.snake = new Snake();
+    this.trigger('GAME_START');
+  }
+
+  endGame() {
+    this.start = false;
+    let score = (this.snake.maxLength - 5) * 10;
+    this.trigger('GAME_END', score);
+  }
+
   generateFood() {
     let x = Math.random() * this.gameWidth | 0;
     let y = Math.random() * this.gameWidth | 0;
     this.foods.push(new Vector(x, y));
+    this.drawEffect(x, y);
   }
 
   update() {
-    this.snake.update();
-    this.foods.forEach((food, i) => {
-      if (this.snake.head.equal(food)) {
-        this.snake.maxLength++;
-        this.foods.splice(i, 1); // 這樣會有問題
-        this.generateFood();
+    if (this.start) {
+      this.snake.update();
+      this.foods.forEach((food, i) => {
+        if (this.snake.head.equal(food)) {
+          this.snake.maxLength++;
+          this.foods.splice(i, 1); // 這樣會有問題
+          this.generateFood();
+        }
+      });
+      // check collide self
+      this.snake.body.forEach(bodyPosition => {
+        if (this.snake.head.equal(bodyPosition)) {
+          this.endGame();
+        }
+      });
+      // check collide boundary
+      if (!this.snake.checkBoundary(this.gameWidth)) {
+        this.endGame();
       }
-    });
+    }
     setTimeout(() => {
       this.update();
-    }, 200);
+    }, 150);
   }
 
   getPosition(x, y) {
@@ -51,6 +91,28 @@ export default class Game {
     this.ctx.fillStyle = color;
     let pos = this.getPosition(v.x, v.y);
     this.ctx.fillRect(pos.x, pos.y, this.bw, this.bw);
+  }
+
+  drawEffect(x, y) {
+    let r = 1;
+    let pos = this.getPosition(x, y);
+    const effect = () => {
+      this.ctx.beginPath();
+      this.ctx.strokeStyle = `rgba(255, 0, 0, ${ (100 - r) / 100 })`;
+      this.ctx.arc(
+        pos.x + this.bw / 2,
+        pos.y + this.bw / 2,
+        r,
+        0,
+        Math.PI * 2
+      );
+      this.ctx.stroke();
+      r += 1;
+      if (r <= 100) {
+        window.requestAnimationFrame(effect);
+      }
+    }
+    window.requestAnimationFrame(effect);
   }
 
   render() {
