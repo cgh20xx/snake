@@ -39,12 +39,17 @@ export default class Game {
     this.start = true;
     this.snake = new Snake();
     this.trigger('GAME_START');
+    this.playSound('C#5', -10);
+    this.playSound('E5', -20, 200);
   }
 
   endGame() {
     this.start = false;
     let score = (this.snake.maxLength - 5) * 10;
     this.trigger('GAME_END', score);
+    this.playSound('A3');
+    this.playSound('E2', -10, 200);
+    this.playSound('A2', -10, 400);
   }
 
   generateFood() {
@@ -52,15 +57,18 @@ export default class Game {
     let y = Math.random() * this.gameWidth | 0;
     this.foods.push(new Vector(x, y));
     this.drawEffect(x, y);
+    this.playSound('E5', -10);
+    this.playSound('A5', -10, 50);
   }
 
   update() {
     if (this.start) {
+      // this.playSound('A2', -20); // 太佔記憶體
       this.snake.update();
       this.foods.forEach((food, i) => {
         if (this.snake.head.equal(food)) {
           this.snake.maxLength++;
-          this.foods.splice(i, 1); // 這樣會有問題
+          this.foods.splice(i, 1); // 這樣多個食物會有問題
           this.generateFood();
         }
       });
@@ -78,6 +86,14 @@ export default class Game {
     setTimeout(() => {
       this.update();
     }, 150);
+  }
+
+  playSound(note, volume = -12, when = 0) {
+    setTimeout(() => {
+      let synth = new Tone.Synth().toMaster(); // 合成器 接到 master
+      synth.volume.value = volume;
+      synth.triggerAttackRelease(note, '8n');
+    }, when);
   }
 
   getPosition(x, y) {
