@@ -5,7 +5,7 @@ export default class Game {
   constructor() {
     this.bw = 12; // 一個格子的寬度
     this.bs = 2; // 格子間的間隔
-    this.gameWidth = 40; // 格子數
+    this.gameWidth = 20; // 格子數
     this.snake = new Snake();
     this.foods = [];
     this.start = false;
@@ -20,6 +20,8 @@ export default class Game {
     this.canvas.height = this.canvas.width;
     this.update();
     this.render();
+    this.generateFood();
+    this.generateFood();
     this.generateFood();
   }
 
@@ -54,22 +56,42 @@ export default class Game {
   }
 
   generateFood() {
-    let x = Math.random() * this.gameWidth | 0;
-    let y = Math.random() * this.gameWidth | 0;
+    let x;
+    let y;
+    do {
+      x = Math.random() * this.gameWidth | 0;
+      y = Math.random() * this.gameWidth | 0;
+    } while (this.checkPositionIsExist(x, y));
     this.foods.push(new Vector(x, y));
     this.drawEffect(x, y);
     this.playSound('E5', -20);
     this.playSound('A5', -20, .1);
   }
 
+  checkPositionIsExist(x, y) {
+    // check foods
+    for (let i = 0; i < this.foods.length; i++) {
+      if (this.foods[i].x === x && this.foods[i].y === y) {
+        return true;
+      }
+    }
+    // check snake body
+    for (let i = 0; i < this.snake.body.length; i++) {
+      if (this.snake.body[i].x === x && this.snake.body[i].y === y) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   update() {
     if (this.start) {
-      this.playSound('A2', -20); // 太佔記憶體
+      this.playSound('A2', -20);
       this.snake.update();
       this.foods.forEach((food, i) => {
         if (this.snake.head.equal(food)) {
           this.snake.maxLength++;
-          this.foods.splice(i, 1); // 這樣多個食物會有問題
+          this.foods.splice(i, 1); // 這樣多個食物可能會有問題
           this.generateFood();
         }
       });
@@ -84,9 +106,11 @@ export default class Game {
         this.endGame();
       }
     }
+    this.speed = 400 / Math.sqrt(this.snake.maxLength); // speed up
+    // this.speed = 1000;
     setTimeout(() => {
       this.update();
-    }, 150);
+    }, this.speed);
   }
 
   playSound(note, volume = -12, delay = 0) {
