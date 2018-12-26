@@ -10,6 +10,7 @@ export default class Game {
     this.foods = [];
     this.start = false;
     this.events = {};
+    this.soundCache = {};
   }
 
   init() {
@@ -38,9 +39,9 @@ export default class Game {
   startGame() {
     this.start = true;
     this.snake = new Snake();
+    this.playSound('C#5', -20);
+    this.playSound('E5', -20, .1);
     this.trigger('GAME_START');
-    this.playSound('C#5', -10);
-    this.playSound('E5', -20, 200);
   }
 
   endGame() {
@@ -48,8 +49,8 @@ export default class Game {
     let score = (this.snake.maxLength - 5) * 10;
     this.trigger('GAME_END', score);
     this.playSound('A3');
-    this.playSound('E2', -10, 200);
-    this.playSound('A2', -10, 400);
+    this.playSound('E2', -10, .2);
+    this.playSound('A2', -10, .4);
   }
 
   generateFood() {
@@ -57,13 +58,13 @@ export default class Game {
     let y = Math.random() * this.gameWidth | 0;
     this.foods.push(new Vector(x, y));
     this.drawEffect(x, y);
-    this.playSound('E5', -10);
-    this.playSound('A5', -10, 50);
+    this.playSound('E5', -20);
+    this.playSound('A5', -20, .1);
   }
 
   update() {
     if (this.start) {
-      // this.playSound('A2', -20); // 太佔記憶體
+      this.playSound('A2', -20); // 太佔記憶體
       this.snake.update();
       this.foods.forEach((food, i) => {
         if (this.snake.head.equal(food)) {
@@ -88,12 +89,16 @@ export default class Game {
     }, 150);
   }
 
-  playSound(note, volume = -12, when = 0) {
-    setTimeout(() => {
+  playSound(note, volume = -12, delay = 0) {
+    let key = '' + note + volume;
+    if (this.soundCache[key]) {
+      this.soundCache[key].triggerAttackRelease(note, '8n', `+${delay}`);
+    } else {
       let synth = new Tone.Synth().toMaster(); // 合成器 接到 master
       synth.volume.value = volume;
-      synth.triggerAttackRelease(note, '8n');
-    }, when);
+      synth.triggerAttackRelease(note, '8n', `+${delay}`);
+      this.soundCache[key] = synth
+    }
   }
 
   getPosition(x, y) {
